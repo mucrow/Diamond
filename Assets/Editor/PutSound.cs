@@ -55,15 +55,28 @@ public class PutSound: EditorWindow {
     _microphoneAudioClipVisual = new Texture2D(w, h);
     for (int y = 0; y < h; ++y) {
       for (int x = 0; x < w; ++x) {
-        _microphoneAudioClipVisual.SetPixel(x, y, Color.black);
+        _microphoneAudioClipVisual.SetPixel(x, y, new Color(0.1f, 0.1f, 0.1f));
       }
     }
-    var data = new float[w];
+    var data = new float[_microphoneAudioClip.samples];
+    int windowLength = _microphoneAudioClip.samples / w;
+    int numWindows = _microphoneAudioClip.samples / windowLength;
     _microphoneAudioClip.GetData(data, 0);
-    for (int x = 0; x < data.Length; ++x) {
-      int y = Mathf.FloorToInt((data[x] / 2f + 0.5f) * h);
-      _microphoneAudioClipVisual.SetPixel(x, y, Color.yellow);
+    for (int windowIndex = 0; windowIndex < numWindows; ++windowIndex) {
+      float windowMax = 0f;
+      for (int windowX = 0; windowX < windowLength; ++windowX) {
+        float sample = Mathf.Abs(data[windowIndex * windowLength + windowX]);
+        if (sample > windowMax) {
+          windowMax = sample;
+        }
+      }
+      int valueMinPixel = Mathf.FloorToInt((windowMax / -2f + 0.5f) * h);
+      int valueMaxPixel = Mathf.FloorToInt((windowMax / 2f + 0.5f) * h);
+      for (int y = valueMinPixel; y <= valueMaxPixel; ++y) {
+        _microphoneAudioClipVisual.SetPixel(windowIndex, y, new Color(1f, 0.5f, 0f));
+      }
     }
+
     _microphoneAudioClipVisual.Apply();
   }
 }
