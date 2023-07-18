@@ -9,7 +9,7 @@ public class PutSound: EditorWindow {
   int _maxRecordingLength = 60;
   AudioClip _microphoneAudioClip;
 
-  [MenuItem ("Window/PutSound")]
+  [MenuItem("Window/Audio/PutSound")]
   public static void ShowWindow() {
     EditorWindow.GetWindow(typeof(PutSound));
   }
