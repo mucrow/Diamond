@@ -9,6 +9,7 @@ public class PutSound: EditorWindow {
   int _maxRecordingLength = 60;
   AudioClip _microphoneAudioClip;
   Texture2D _microphoneAudioClipVisual;
+  double _recordingStartTime;
 
   [MenuItem("Window/Audio/PutSound")]
   public static void ShowWindow() {
@@ -24,6 +25,11 @@ public class PutSound: EditorWindow {
       if (GUILayout.Button("Stop Recording")) {
         string microphoneName = Microphone.devices[0];
         Microphone.End(microphoneName);
+        double recordingEndTime = EditorApplication.timeSinceStartup;
+        float recordingLength = (float)(recordingEndTime - _recordingStartTime);
+
+        _microphoneAudioClip = TruncateAudioClip(_microphoneAudioClip, recordingLength);
+
         var savePath = Path.Combine(Application.dataPath, DateTime.Now.ToString("yyyyMMddHHmmss") + ".wav");
         SavWav.Save(savePath, _microphoneAudioClip);
         UpdateMicrophoneAudioClipVisual();
@@ -34,6 +40,7 @@ public class PutSound: EditorWindow {
     else {
       if (GUILayout.Button("Start Recording")) {
         string microphoneName = Microphone.devices[0];
+        _recordingStartTime = EditorApplication.timeSinceStartup;
         _microphoneAudioClip = Microphone.Start(microphoneName, false, _maxRecordingLength, AudioSettings.outputSampleRate);
         _isRecording = true;
       }
@@ -78,5 +85,18 @@ public class PutSound: EditorWindow {
     }
 
     _microphoneAudioClipVisual.Apply();
+  }
+
+  AudioClip TruncateAudioClip(AudioClip audioClip, float endTime) {
+    if (audioClip.channels != 1) {
+      throw new NotImplementedException("Cannot truncate AudioClip with multiple channels (not yet implemented)");
+    }
+    var data = new float[audioClip.samples];
+    audioClip.GetData(data, 0);
+    var truncatedClipData = new float[Mathf.FloorToInt(audioClip.frequency * endTime)];
+    Array.Copy(data, truncatedClipData, truncatedClipData.Length);
+    var ret = AudioClip.Create(audioClip.name, truncatedClipData.Length, 1, audioClip.frequency, false);
+    ret.SetData(truncatedClipData, 0);
+    return ret;
   }
 }
